@@ -51,7 +51,6 @@ class NasaClientTest {
         lenient().when(requestHeadersUriSpecMock.uri(anyString(), any(Function.class))).thenReturn(requestHeadersSpecMock);
         lenient().when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
         lenient().when(nasaApiConfig.getBaseUrl()).thenReturn("http://api.nasa.gov");
-        lenient().when(nasaApiConfig.getApiKey()).thenReturn("DEMO_KEY");
     }
 
     @Test

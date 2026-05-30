@@ -32,7 +32,6 @@ public class NasaClient {
     public Mono<ApodResponse> fetchApod(LocalDate date) {
         return webClient.get()
                 .uri(nasaApiConfig.getBaseUrl(), uriBuilder -> uriBuilder
-                        .queryParam("api_key", nasaApiConfig.getApiKey())
                         .queryParam("date", date.format(DateTimeFormatter.ISO_LOCAL_DATE))
                         .build())
                 .retrieve()
