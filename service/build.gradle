@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
+    id 'checkstyle' // Add the checkstyle plugin
 }
 
 dependencies {
@@ -13,6 +14,13 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+// Checkstyle configuration
+checkstyle {
+    toolVersion = '10.12.0' // Specify Checkstyle version
+    configFile = rootProject.file('checkstyle.xml') // Use the checkstyle.xml from the project root
+    sourceSets = [sourceSets.main, sourceSets.test] // Apply to main and test source sets
 }
 
 tasks.named('test') {

@@ -5,6 +5,15 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 
+/**
+ * Service interface for retrieving Astronomy Picture of the Day (APOD) data.
+ */
 public interface ApodService {
+    /**
+     * Retrieves the Astronomy Picture of the Day (APOD) for a given date.
+     *
+     * @param date The date for which to retrieve the APOD.
+     * @return A Mono emitting the ApodResponse containing the APOD data.
+     */
     Mono<ApodResponse> getApod(LocalDate date);
 }
