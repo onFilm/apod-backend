@@ -57,3 +57,29 @@ jacocoTestReport {
         }))
     }
 }
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'CLASS'
+            excludes = [
+                'com.onfilm.apodbackend.ApodBackendApplication',
+                'com.onfilm.apodbackend.config.*',
+                'com.onfilm.apodbackend.model.*',
+                'com.onfilm.apodbackend.ApodBackendApplicationKt',
+                'com.onfilm.apodbackend.dto.ErrorResponse',
+                'com.onfilm.apodbackend.dto.ApodResponse'
+            ]
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.90 // 90% instruction coverage
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.90 // 90% branch coverage
+            }
+        }
+    }
+}
