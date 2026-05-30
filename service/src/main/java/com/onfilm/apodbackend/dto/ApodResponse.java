@@ -1,8 +1,9 @@
 package com.onfilm.apodbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 /**
@@ -10,6 +11,8 @@ import java.time.LocalDate;
  * This class encapsulates the details of the APOD, including its title, explanation, date, and various media URLs.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ApodResponse {
 
     private String title;

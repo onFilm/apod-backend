@@ -57,4 +57,17 @@ class ApodControllerTest {
                 .jsonPath("$.title").isEqualTo("Today Title")
                 .jsonPath("$.date").isEqualTo(LocalDate.now().toString());
     }
+
+    @Test
+    void getApod_ServiceThrowsException_ShouldReturnInternalServerError() {
+        when(apodService.getApod(any(LocalDate.class))).thenReturn(Mono.error(new RuntimeException("Service unavailable")));
+
+        webTestClient.get()
+                .uri("/api/v1/apod")
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectBody()
+                .jsonPath("$.error").isEqualTo("Internal Server Error")
+                .jsonPath("$.message").isEqualTo("Service unavailable");
+    }
 }

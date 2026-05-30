@@ -1,0 +1,33 @@
+name: Build, Test, and Coverage Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build, Test and Verify Coverage
+        run: ./gradlew clean build jacocoTestReport jacocoTestCoverageVerification
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: service/build/reports/jacoco/test/

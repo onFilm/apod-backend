@@ -2,6 +2,7 @@ package com.onfilm.apodbackend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
  * DTO for representing error responses.
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class ErrorResponse {
     private LocalDateTime timestamp;

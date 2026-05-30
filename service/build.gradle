@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
     id 'checkstyle' // Add the checkstyle plugin
+    id 'jacoco' // Add JaCoCo plugin
 }
 
 dependencies {
@@ -31,4 +32,54 @@ tasks.named('bootJar') {
     preserveFileTimestamps = false
     reproducibleFileOrder = true
     mainClass = 'com.onfilm.apodbackend.ApodBackendApplication'
+}
+
+jacoco {
+    toolVersion = "0.8.12" // Specify JaCoCo version
+}
+
+jacocoTestReport {
+    dependsOn tasks.test // Ensure tests are run before generating the report
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                'com/onfilm/apodbackend/ApodBackendApplication.class',
+                'com/onfilm/apodbackend/config/**',
+                'com/onfilm/apodbackend/model/**',
+                'com/onfilm/apodbackend/ApodBackendApplicationKt.class' // Exclude if Kotlin is used
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'CLASS'
+            excludes = [
+                'com.onfilm.apodbackend.ApodBackendApplication',
+                'com.onfilm.apodbackend.config.*',
+                'com.onfilm.apodbackend.model.*',
+                'com.onfilm.apodbackend.ApodBackendApplicationKt',
+                'com.onfilm.apodbackend.dto.ErrorResponse',
+                'com.onfilm.apodbackend.dto.ApodResponse'
+            ]
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.90 // 90% instruction coverage
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.90 // 90% branch coverage
+            }
+        }
+    }
 }
