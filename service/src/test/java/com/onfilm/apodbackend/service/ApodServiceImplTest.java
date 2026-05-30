@@ -1,28 +1,45 @@
 package com.onfilm.apodbackend.service;
 
 import com.onfilm.apodbackend.dto.ApodResponse;
+import com.onfilm.apodbackend.model.Apod;
+import com.onfilm.apodbackend.repository.ApodRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for the {@link ApodServiceImpl} class.
+ */
 @ExtendWith(MockitoExtension.class)
 class ApodServiceImplTest {
 
     @Mock
     private NasaClient nasaClient;
 
+    @Mock
+    private ApodRepository apodRepository;
+
     @InjectMocks
     private ApodServiceImpl apodService;
 
+    /**
+     * Tests that {@code getApod} successfully calls {@code NasaClient} and returns the expected response.
+     */
     @Test
     void getApod_ShouldCallNasaClientAndReturnResponse() {
         LocalDate date = LocalDate.of(2023, 10, 1);
@@ -40,6 +57,9 @@ class ApodServiceImplTest {
         verify(nasaClient).fetchApod(date);
     }
 
+    /**
+     * Tests that {@code getApod} returns an error when {@code NasaClient} throws an exception.
+     */
     @Test
     void getApod_NasaClientThrowsError_ShouldReturnError() {
         LocalDate date = LocalDate.of(2023, 10, 1);
@@ -55,5 +75,123 @@ class ApodServiceImplTest {
                 .verify();
 
         verify(nasaClient).fetchApod(date);
+    }
+
+    /**
+     * Tests that {@code getApods} returns all APODs unsorted when no sorting parameters are provided.
+     */
+    @Test
+    void getApods_NoParams_ShouldReturnAllApodsUnsorted() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        when(apodRepository.findAll(Sort.unsorted())).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods(null, null);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(Sort.unsorted());
+    }
+
+    /**
+     * Tests that {@code getApods} returns all APODs unsorted when an empty sort field is provided.
+     */
+    @Test
+    void getApods_WithEmptySortField_ShouldReturnAllApodsUnsorted() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        when(apodRepository.findAll(Sort.unsorted())).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods("", "asc"); // Empty sortField
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(Sort.unsorted());
+    }
+
+    /**
+     * Tests that {@code getApods} returns APODs sorted in ascending order when specified.
+     */
+    @Test
+    void getApods_WithSortAsc_ShouldReturnSortedApods() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        Sort sort = Sort.by(Sort.Direction.ASC, "date");
+        when(apodRepository.findAll(sort)).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods("date", "asc");
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(sort);
+    }
+
+    /**
+     * Tests that {@code getApods} returns APODs sorted in descending order when specified.
+     */
+    @Test
+    void getApods_WithSortDesc_ShouldReturnSortedApods() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod2, apod1); // Expecting descending order
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "date");
+        when(apodRepository.findAll(sort)).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods("date", "desc");
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(sort);
+    }
+
+    /**
+     * Tests that {@code getApods} returns an empty Flux when the repository is empty.
+     */
+    @Test
+    void getApods_EmptyRepository_ShouldReturnEmptyFlux() {
+        when(apodRepository.findAll(any(Sort.class))).thenReturn(Collections.emptyList());
+
+        Flux<ApodResponse> result = apodService.getApods(null, null);
+
+        StepVerifier.create(result)
+                .expectNextCount(0)
+                .verifyComplete();
+
+        verify(apodRepository).findAll(Sort.unsorted());
     }
 }

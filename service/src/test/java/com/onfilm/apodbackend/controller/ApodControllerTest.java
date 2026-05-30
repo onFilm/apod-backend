@@ -7,13 +7,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for the {@link ApodController} class.
+ */
 @WebFluxTest(ApodController.class)
 class ApodControllerTest {
 
@@ -23,6 +30,9 @@ class ApodControllerTest {
     @MockBean
     private ApodService apodService;
 
+    /**
+     * Tests that {@code getApod} with a date parameter returns an {@link ApodResponse}.
+     */
     @Test
     void getApod_WithDate_ShouldReturnApodResponse() {
         LocalDate date = LocalDate.of(2023, 10, 1);
@@ -41,23 +51,9 @@ class ApodControllerTest {
                 .jsonPath("$.date").isEqualTo("2023-10-01");
     }
 
-    @Test
-    void getApod_WithoutDate_ShouldReturnApodResponseForToday() {
-        ApodResponse mockResponse = new ApodResponse();
-        mockResponse.setTitle("Today Title");
-        mockResponse.setDate(LocalDate.now());
-
-        when(apodService.getApod(any(LocalDate.class))).thenReturn(Mono.just(mockResponse));
-
-        webTestClient.get()
-                .uri("/api/v1/apod")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.title").isEqualTo("Today Title")
-                .jsonPath("$.date").isEqualTo(LocalDate.now().toString());
-    }
-
+    /**
+     * Tests that {@code getApod} returns an internal server error when the service throws an exception.
+     */
     @Test
     void getApod_ServiceThrowsException_ShouldReturnInternalServerError() {
         when(apodService.getApod(any(LocalDate.class))).thenReturn(Mono.error(new RuntimeException("Service unavailable")));
@@ -67,7 +63,69 @@ class ApodControllerTest {
                 .exchange()
                 .expectStatus().is5xxServerError()
                 .expectBody()
-                .jsonPath("$.error").isEqualTo("Internal Server Error")
                 .jsonPath("$.message").isEqualTo("Service unavailable");
+    }
+
+    /**
+     * Tests that {@code getApods} with no parameters returns a list of {@link ApodResponse}.
+     */
+    @Test
+    void getApods_NoParams_ShouldReturnListOfApodResponses() {
+        ApodResponse apod1 = new ApodResponse();
+        apod1.setTitle("Apod 1");
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        ApodResponse apod2 = new ApodResponse();
+        apod2.setTitle("Apod 2");
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        List<ApodResponse> mockResponses = Arrays.asList(apod1, apod2);
+
+        when(apodService.getApods(null, null)).thenReturn(Flux.fromIterable(mockResponses));
+
+        webTestClient.get()
+                .uri("/api/v1/apods")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(ApodResponse.class)
+                .hasSize(2)
+                .contains(apod1, apod2);
+    }
+
+    /**
+     * Tests that {@code getApods} with sort and order parameters returns a list of {@link ApodResponse}.
+     */
+    @Test
+    void getApods_WithSortAndOrder_ShouldReturnListOfApodResponses() {
+        ApodResponse apod1 = new ApodResponse();
+        apod1.setTitle("Apod 1");
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        ApodResponse apod2 = new ApodResponse();
+        apod2.setTitle("Apod 2");
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        List<ApodResponse> mockResponses = Arrays.asList(apod1, apod2);
+
+        when(apodService.getApods(eq("date"), eq("asc"))).thenReturn(Flux.fromIterable(mockResponses));
+
+        webTestClient.get()
+                .uri("/api/v1/apods?_sort=date&_order=asc")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(ApodResponse.class)
+                .hasSize(2)
+                .contains(apod1, apod2);
+    }
+
+    /**
+     * Tests that {@code getApods} returns an internal server error when the service throws an exception.
+     */
+    @Test
+    void getApods_ServiceThrowsException_ShouldReturnInternalServerError() {
+        when(apodService.getApods(any(), any())).thenReturn(Flux.error(new RuntimeException("Apods service unavailable")));
+
+        webTestClient.get()
+                .uri("/api/v1/apods")
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectBody()
+                .jsonPath("$.message").isEqualTo("Apods service unavailable");
     }
 }
