@@ -23,7 +23,7 @@ public class ApodResponse {
     private String mediaType;
     @JsonProperty("service_version")
     private String serviceVersion;
-    @JsonProperty("hdurl")
-    private String hdUrl;
+    private String hdurl;
     private String copyright;
+    private String credit;
 }
