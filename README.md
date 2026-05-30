@@ -19,6 +19,29 @@ This is a Spring Boot application that serves as the backend for the Astronomy P
 * Exposes actuator endpoints for monitoring.
 * Reactive non-blocking architecture using Spring WebFlux.
 
+## Contributing
+
+We use `semantic-release` to automate our release process. To make this work, we follow a convention for our commit messages. Please follow this convention for your commit messages.
+
+### Commit Message Format
+
+Each commit message should be a one-liner with the following format:
+
+`<type>: <subject>`
+
+The **type** must be one of the following:
+
+*   **feat**: A new feature
+*   **fix**: A bug fix
+*   **docs**: Documentation only changes
+*   **chore**: Changes to the build process or auxiliary tools and libraries such as documentation generation
+
+Example commit messages:
+
+*   `feat: add new endpoint for user profiles`
+*   `fix: correct issue with cache invalidation`
+*   `docs: update README with contributing guidelines`
+
 ## Getting Started
 
 ### Prerequisites
