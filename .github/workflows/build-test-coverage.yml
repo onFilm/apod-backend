@@ -2,51 +2,32 @@ name: Build, Test, and Coverage Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-test-coverage:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
 
-    - name: Build with Gradle and run tests with JaCoCo coverage
-      run: ./gradlew clean build jacocoTestReport
+      - name: Grant execute permission
+        run: chmod +x gradlew
 
-    - name: Upload JaCoCo coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: jacoco-report
-        path: service/build/reports/jacoco/test/jacocoTestReport.xml # Adjust path if your project structure is different
+      - name: Build, Test and Verify Coverage
+        run: ./gradlew clean build jacocoTestReport jacocoTestCoverageVerification
 
-    - name: Check coverage threshold
-      id: coverage
-      run: |
-        # Install xmllint for parsing XML
-        sudo apt-get update
-        sudo apt-get install -y libxml2-utils
-
-        # Parse the JaCoCo report to get coverage percentage
-        # This example assumes a single module and looks for the 'instruction' coverage.
-        # You might need to adjust the XPath depending on your report structure and what you want to measure (e.g., branch, line).
-        COVERAGE_PERCENTAGE=$(xmllint --xpath "string(//report/counter[@type='INSTRUCTION']/@missed * 100 div (//report/counter[@type='INSTRUCTION']/@missed + //report/counter[@type='INSTRUCTION']/@covered))" service/build/reports/jacoco/test/jacocoTestReport.xml | cut -d'.' -f1)
-
-        echo "Instruction Coverage: $COVERAGE_PERCENTAGE%"
-
-        if (( $(echo "$COVERAGE_PERCENTAGE < 90" | bc -l) )); then
-          echo "Code coverage is below 90%!"
-          exit 1
-        else
-          echo "Code coverage is 90% or higher. Good job!"
-        fi
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: service/build/reports/jacoco/test/
