@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO for representing error responses.
+ */
 @Data
 @AllArgsConstructor
 public class ErrorResponse {
