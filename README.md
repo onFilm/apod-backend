@@ -19,6 +19,28 @@ This is a Spring Boot application that serves as the backend for the Astronomy P
 * Exposes actuator endpoints for monitoring.
 * Reactive non-blocking architecture using Spring WebFlux.
 
+## Automated Data Updates
+
+This project includes a GitHub Actions workflow to automatically update the `apod_data.json` file daily.
+
+### How It Works
+- **Schedule:** The workflow runs every day at 06:00 UTC.
+- **Data Source:** It fetches the latest APOD data from `https://apod.ellanan.com/api`.
+- **Duplicate Protection:** The script checks if an entry for the target date already exists. If so, it skips the update to prevent duplicates.
+- **Commit Strategy:**
+    - For scheduled runs: `chore(apod): add APOD for YYYY-MM-DD`
+    - For manual runs: `chore(apod): backfill APOD for YYYY-MM-DD`
+
+### Manual Backfill
+You can manually trigger the workflow to backfill data for a specific date.
+1. Go to the **Actions** tab in the GitHub repository.
+2. Select the **Update APOD Data** workflow.
+3. Click **Run workflow**, enter the desired date in `YYYY-MM-DD` format, and run it.
+
+### Troubleshooting
+- **Workflow Failures:** Check the workflow logs in the Actions tab for errors. The script includes retries for API failures.
+- **No Commit:** If no new data is added (e.g., a duplicate is found), the workflow completes without making a commit. This is expected behavior.
+
 ## Contributing
 
 We use `semantic-release` to automate our release process. To make this work, we follow a convention for our commit messages. Please follow this convention for your commit messages.

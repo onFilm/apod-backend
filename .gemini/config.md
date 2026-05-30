@@ -37,3 +37,30 @@ When writing clients to fetch data from NASA:
 ### Skill: Test-Driven Development (TDD) Support
 * Whenever I ask for a feature, write or suggest the test cases *first* or alongside the implementation.
 * Prefer writing slices like `@WebMvcTest` for controllers and pure unit tests for services.
+
+## 5. Automation Workflow Configuration
+
+This section outlines the configuration for the automated APOD data fetching workflow.
+
+### API Configuration
+- **API Endpoint:** `https://apod.ellanan.com/api`
+- **Method:** `GET`
+- **Query Parameter:** `date` (format: `YYYY-MM-DD`)
+- **Resilience:** The fetching script includes a retry mechanism with exponential backoff to handle transient API failures.
+
+### Workflow Configuration
+- **File:** `.github/workflows/update-apod.yml`
+- **Triggers:**
+    - **Scheduled:** Runs daily at 06:00 UTC (`cron: '0 6 * * *'`).
+    - **Manual:** Can be triggered via `workflow_dispatch`.
+- **Permissions:** Requires `contents: write` to commit updates.
+
+### Workflow Inputs
+- **`date`** (Optional): Target date for manual backfill in `YYYY-MM-DD` format. Defaults to the current date in the `America/New_York` timezone.
+
+### Output File Structure
+- **File:** `src/main/resources/apod_data.json`
+- **Format:** Chronologically sorted JSON array of APOD data objects, with `date` acting as a unique key to prevent duplicates.
+
+### Branch Strategy
+- **Target Branch:** Automatically commits to the `main` branch.

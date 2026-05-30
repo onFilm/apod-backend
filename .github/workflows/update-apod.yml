@@ -1,0 +1,47 @@
+name: Update APOD Data
+
+on:
+  schedule:
+    # Run automatically every day at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Target date (YYYY-MM-DD)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-apod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Update Script
+        id: update_script
+        run: node scripts/update-apod.js "${{ github.event.inputs.date }}"
+
+      - name: Commit changes
+        if: steps.update_script.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/main/resources/apod_data.json
+          
+          # Determine commit message strategy
+          COMMIT_MSG="chore(apod): add APOD for ${{ steps.update_script.outputs.apod_date }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            COMMIT_MSG="chore(apod): backfill APOD for ${{ steps.update_script.outputs.apod_date }}"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git push
