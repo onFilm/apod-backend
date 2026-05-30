@@ -2,8 +2,11 @@
 
 ## 1. Project Context
 * **Project Name:** APOD API Service
-* **Tech Stack:** Java 17, Spring Boot 3.x, Maven, Spring Web, Spring Data, TestNG/JUnit.
+* **Tech Stack:** Java 17, Spring Boot 3.x, Gradle, Spring Web, Spring Data, JUnit.
 * **Core Function:** Fetch, parse, cache, and serve NASA's Astronomical Picture of the Day.
+* **Module Structure:**
+    * `service/`: Contains all production application code, API implementations, controllers, business logic, dependency injection, and runtime configurations.
+    * `service-hermetic/`: Contains hermetic/integration/end-to-end test suites, test-only utilities, fixtures, environments, and mock infrastructure for hermetic testing.
 
 ## 2. Developer Persona & Coding Standards
 * **Language:** Java (Modern, utilizing records, pattern matching where applicable).
@@ -59,8 +62,45 @@ This section outlines the configuration for the automated APOD data fetching wor
 - **`date`** (Optional): Target date for manual backfill in `YYYY-MM-DD` format. Defaults to the current date in the `America/New_York` timezone.
 
 ### Output File Structure
-- **File:** `src/main/resources/apod_data.json`
+- **File:** `service/src/main/resources/apod_data.json`
 - **Format:** Chronologically sorted JSON array of APOD data objects, with `date` acting as a unique key to prevent duplicates.
 
 ### Branch Strategy
 - **Target Branch:** Automatically commits to the `main` branch.
+
+## 6. Build and Test Commands
+
+### Build
+* **Full Project Build:** `./gradlew build`
+* **Service Module Build:** `./gradlew :service:build`
+* **Service Hermetic Module Build:** `./gradlew :service-hermetic:build`
+
+### Test
+* **Run All Tests:** `./gradlew test`
+* **Run Service Unit Tests:** `./gradlew :service:test`
+* **Run Service Hermetic Tests:** `./gradlew :service-hermetic:test`
+
+## 7. CI/CD Expectations
+
+### Build Pipeline
+* The CI pipeline should build the `service` module to produce deployable artifacts.
+
+### Test Pipeline
+* The CI pipeline should run both `service` unit tests and `service-hermetic` tests.
+
+### PR Validation
+* All pull requests must validate both `service` and `service-hermetic` modules (build and test).
+
+### Artifacts
+* Deployable artifacts will be generated from the `service` module.
+
+### Coverage
+* Existing code coverage reporting should be preserved and configured for the new module structure.
+
+## 8. Development Workflow
+
+### Local Development
+* Developers can run the `service` module directly using Spring Boot's run configurations or `./gradlew :service:bootRun`.
+
+### Hermetic Testing
+* Hermetic tests can be executed via `./gradlew :service-hermetic:test` for isolated, comprehensive validation.

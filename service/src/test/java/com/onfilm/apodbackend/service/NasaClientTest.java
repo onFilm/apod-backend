@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,11 +47,11 @@ class NasaClientTest {
 
     @BeforeEach
     void setUp() {
-        when(webClient.get()).thenReturn(requestHeadersUriSpecMock);
-        when(requestHeadersUriSpecMock.uri(anyString(), any(Function.class))).thenReturn(requestHeadersSpecMock);
-        when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(nasaApiConfig.getBaseUrl()).thenReturn("http://api.nasa.gov");
-        when(nasaApiConfig.getApiKey()).thenReturn("DEMO_KEY");
+        lenient().when(webClient.get()).thenReturn(requestHeadersUriSpecMock);
+        lenient().when(requestHeadersUriSpecMock.uri(anyString(), any(Function.class))).thenReturn(requestHeadersSpecMock);
+        lenient().when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
+        lenient().when(nasaApiConfig.getBaseUrl()).thenReturn("http://api.nasa.gov");
+        lenient().when(nasaApiConfig.getApiKey()).thenReturn("DEMO_KEY");
     }
 
     @Test

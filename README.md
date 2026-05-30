@@ -10,6 +10,7 @@ This is a Spring Boot application that serves as the backend for the Astronomy P
 * Redis (for caching)
 * Lombok
 * JUnit 5 & Reactor Test
+* Gradle (Multi-module project)
 
 ## Features
 
@@ -18,6 +19,13 @@ This is a Spring Boot application that serves as the backend for the Astronomy P
 * Includes basic error handling and validation.
 * Exposes actuator endpoints for monitoring.
 * Reactive non-blocking architecture using Spring WebFlux.
+
+## Project Structure
+
+The project is organized into two main modules:
+
+*   **`service/`**: Contains all production application code, API implementations, controllers, business logic, and runtime configurations.
+*   **`service-hermetic/`**: Contains hermetic, integration, and end-to-end test suites, along with test-only utilities and mock infrastructure.
 
 ## Automated Data Updates
 
@@ -114,7 +122,7 @@ curl -X GET 'http://localhost:8080/api/v1/apod?date=2023-10-26'
 
 The application is configured using properties. Important settings include:
 
-*   **NASA API Key:** The application uses a default `DEMO_KEY` to connect to NASA API. You can override it via `application.properties`:
+*   **NASA API Key:** The application uses a default `DEMO_KEY` to connect to NASA API. You can override it via `application.properties` in the `service` module:
     ```properties
     nasa.api.key=YOUR_NASA_API_KEY
     nasa.api.base-url=https://api.nasa.gov/planetary/apod
@@ -122,18 +130,25 @@ The application is configured using properties. Important settings include:
 
 ## Running the application
 
-You can run the application using the following command:
+You can run the `service` module using the following command:
 
 ```bash
-./gradlew bootRun
+./gradlew :service:bootRun
 ```
 
 The application will be available at `http://localhost:8080`.
 
 ## Running tests
 
-You can run the tests using the following command:
+You can run all tests using:
 
 ```bash
 ./gradlew test
+```
+
+To run tests for a specific module:
+
+```bash
+./gradlew :service:test
+./gradlew :service-hermetic:test
 ```
