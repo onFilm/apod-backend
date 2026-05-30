@@ -39,4 +39,21 @@ class ApodServiceImplTest {
 
         verify(nasaClient).fetchApod(date);
     }
+
+    @Test
+    void getApod_NasaClientThrowsError_ShouldReturnError() {
+        LocalDate date = LocalDate.of(2023, 10, 1);
+        RuntimeException expectedError = new RuntimeException("NasaClient error");
+
+        when(nasaClient.fetchApod(date)).thenReturn(Mono.error(expectedError));
+
+        Mono<ApodResponse> result = apodService.getApod(date);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException &&
+                        throwable.getMessage().equals("NasaClient error"))
+                .verify();
+
+        verify(nasaClient).fetchApod(date);
+    }
 }
