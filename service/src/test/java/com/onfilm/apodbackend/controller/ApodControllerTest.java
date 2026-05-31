@@ -42,8 +42,6 @@ class ApodControllerTest {
 
     /**
      * Retrieves the APOD data for a specific date.
-     *
-     * @return A Mono emitting the ApodResponse.
      */
     @Test
     void getApod_WithDate_ShouldReturnApodResponse() {
