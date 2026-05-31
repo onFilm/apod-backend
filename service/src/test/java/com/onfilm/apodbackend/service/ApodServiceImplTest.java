@@ -180,6 +180,32 @@ class ApodServiceImplTest {
     }
 
     /**
+     * Tests that {@code getApods} returns APODs sorted in ascending order when sortField is provided and sortOrder is null.
+     */
+    @Test
+    void getApods_WithSortFieldAndNullSortOrder_ShouldReturnSortedAscending() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        Sort sort = Sort.by(Sort.Direction.ASC, "date");
+        when(apodRepository.findAll(sort)).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods("date", null, null, null);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(sort);
+    }
+
+    /**
      * Tests that {@code getApods} returns an empty Flux when the repository is empty.
      */
     @Test
@@ -224,6 +250,31 @@ class ApodServiceImplTest {
     }
 
     /**
+     * Tests that {@code getApods} with a negative offset parameter does not skip elements.
+     */
+    @Test
+    void getApods_WithNegativeOffset_ShouldNotSkipElements() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        when(apodRepository.findAll(Sort.unsorted())).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods(null, null, -1, null); // Negative offset
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(Sort.unsorted());
+    }
+
+    /**
      * Tests that {@code getApods} with size parameter limits the number of elements returned.
      */
     @Test
@@ -242,6 +293,31 @@ class ApodServiceImplTest {
         when(apodRepository.findAll(Sort.unsorted())).thenReturn(mockApods);
 
         Flux<ApodResponse> result = apodService.getApods(null, null, null, 2);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
+                .expectNextMatches(response -> response.getTitle().equals("Apod 2"))
+                .verifyComplete();
+
+        verify(apodRepository).findAll(Sort.unsorted());
+    }
+
+    /**
+     * Tests that {@code getApods} with a non-positive size parameter does not limit elements.
+     */
+    @Test
+    void getApods_WithNonPositiveSize_ShouldNotLimitElements() {
+        Apod apod1 = new Apod();
+        apod1.setDate(LocalDate.of(2023, 1, 1));
+        apod1.setTitle("Apod 1");
+        Apod apod2 = new Apod();
+        apod2.setDate(LocalDate.of(2023, 1, 2));
+        apod2.setTitle("Apod 2");
+        List<Apod> mockApods = Arrays.asList(apod1, apod2);
+
+        when(apodRepository.findAll(Sort.unsorted())).thenReturn(mockApods);
+
+        Flux<ApodResponse> result = apodService.getApods(null, null, null, 0); // Zero size
 
         StepVerifier.create(result)
                 .expectNextMatches(response -> response.getTitle().equals("Apod 1"))
