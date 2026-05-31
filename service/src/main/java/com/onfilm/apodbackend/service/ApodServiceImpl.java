@@ -5,6 +5,8 @@ import com.onfilm.apodbackend.model.Apod;
 import com.onfilm.apodbackend.repository.ApodRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -62,6 +64,34 @@ public class ApodServiceImpl implements ApodService {
         }
 
         return apodsFlux.map(this::convertToApodResponse);
+    }
+
+    /**
+     * Searches for APODs based on a search term and returns a paginated list.
+     *
+     * @param searchTerm The term to search for in APOD titles or explanations.
+     * @param sortField The field to sort by (e.g., "date").
+     * @param sortOrder The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
+     * @return A Flux emitting a list of ApodResponse.
+     */
+    @Override
+    public Flux<ApodResponse> searchApods(String searchTerm, String sortField, String sortOrder, Integer offset, Integer size) {
+        Sort sort = Sort.unsorted();
+        if (sortField != null && !sortField.isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sort = Sort.by(direction, sortField);
+        }
+
+        int effectiveSize = (size != null && size > 0) ? size : 20; // Default size from controller
+        int effectiveOffset = (offset != null && offset >= 0) ? offset : 0;
+        int page = effectiveOffset / effectiveSize; // Calculate page number
+
+        Pageable pageable = PageRequest.of(page, effectiveSize, sort);
+
+        return Flux.fromIterable(apodRepository.findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(searchTerm, searchTerm, pageable))
+                .map(this::convertToApodResponse);
     }
 
     /**

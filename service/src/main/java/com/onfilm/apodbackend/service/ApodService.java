@@ -28,4 +28,16 @@ public interface ApodService {
      * @return A Flux emitting a list of ApodResponse.
      */
     Flux<ApodResponse> getApods(String sort, String order, Integer offset, Integer size);
+
+    /**
+     * Searches for APODs based on a search term and returns a paginated list.
+     *
+     * @param searchTerm The term to search for in APOD titles or explanations.
+     * @param sort The field to sort by (e.g., "date").
+     * @param order The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
+     * @return A Flux emitting a list of ApodResponse.
+     */
+    Flux<ApodResponse> searchApods(String searchTerm, String sort, String order, Integer offset, Integer size);
 }
