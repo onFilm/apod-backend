@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,7 +20,11 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -82,6 +87,25 @@ class ApodControllerTest {
                 .expectHeader().valueMatches("Set-Cookie", ".*Max-Age=0.*")
                 .expectHeader().valueMatches("Set-Cookie", ".*HttpOnly.*")
                 .expectHeader().valueMatches("Set-Cookie", ".*Secure.*");
+        
+        verify(sessionService).invalidateSession("test-session-id");
+    }
+
+    /**
+     * Tests that the invalidate endpoint handles a missing session cookie gracefully (branch coverage).
+     */
+    @Test
+    void invalidate_WithoutSessionCookie_ShouldStillReturnLogoutResponse() {
+        ApodController controller = new ApodController(apodService, sessionService);
+        Mono<ResponseEntity<String>> result = controller.invalidate(null);
+        
+        ResponseEntity<String> response = result.block();
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("Logged out", response.getBody());
+        
+        // Verify that invalidateSession was not called since sessionId was null
+        verifyNoInteractions(sessionService);
     }
 
     /**
