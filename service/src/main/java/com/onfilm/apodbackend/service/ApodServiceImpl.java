@@ -11,7 +11,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * Service implementation for handling APOD business logic.
@@ -37,22 +36,32 @@ public class ApodServiceImpl implements ApodService {
     }
 
     /**
-     * Retrieves a list of APOD data with optional sorting.
+     * Retrieves a list of APOD data with optional sorting and pagination.
      *
      * @param sortField The field to sort by (e.g., "date").
      * @param sortOrder The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
      * @return A Flux emitting a list of ApodResponse.
      */
     @Override
-    public Flux<ApodResponse> getApods(String sortField, String sortOrder) {
+    public Flux<ApodResponse> getApods(String sortField, String sortOrder, Integer offset, Integer size) {
         Sort sort = Sort.unsorted();
         if (sortField != null && !sortField.isEmpty()) {
             Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC;
             sort = Sort.by(direction, sortField);
         }
 
-        List<Apod> apods = apodRepository.findAll(sort);
-        return Flux.fromIterable(apods).map(this::convertToApodResponse);
+        Flux<Apod> apodsFlux = Flux.fromIterable(apodRepository.findAll(sort));
+
+        if (offset != null && offset >= 0) {
+            apodsFlux = apodsFlux.skip(offset);
+        }
+        if (size != null && size > 0) {
+            apodsFlux = apodsFlux.take(size);
+        }
+
+        return apodsFlux.map(this::convertToApodResponse);
     }
 
     /**
