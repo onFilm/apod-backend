@@ -39,7 +39,7 @@ async function main() {
     const targetDate = (inputDate && inputDate.trim() !== '') ? inputDate.trim() : await getNewYorkDate();
     console.log(`Target Date resolved to: ${targetDate}`);
 
-    const dataFilePath = path.join(__dirname, '..', 'src', 'main', 'resources', 'apod_data.json');
+    const dataFilePath = path.join(__dirname, '..', 'service', 'src', 'main', 'resources', 'apod_data.json');
     let existingData = [];
     
     // 4. Read existing JSON file
