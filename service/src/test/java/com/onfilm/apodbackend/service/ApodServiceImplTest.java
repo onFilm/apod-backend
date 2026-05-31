@@ -485,7 +485,7 @@ class ApodServiceImplTest {
         Integer size = 1;
         Integer offset = 1;
         Sort sort = Sort.unsorted();
-        Pageable pageable = PageRequest.of(offset / size, size, sort);
+        Pageable pageable = PageRequest.of(offset, size, sort);
 
         Apod apod1 = new Apod();
         apod1.setTitle("Orion Nebula");
@@ -517,7 +517,7 @@ class ApodServiceImplTest {
         Integer size = 1;
         Integer offset = 1;
         Sort sort = Sort.by(Sort.Direction.DESC, "date");
-        Pageable pageable = PageRequest.of(offset / size, size, sort);
+        Pageable pageable = PageRequest.of(offset, size, sort);
 
         Apod apod1 = new Apod();
         apod1.setDate(LocalDate.of(2023, 1, 1));
@@ -535,6 +535,64 @@ class ApodServiceImplTest {
 
         StepVerifier.create(result)
                 .expectNextMatches(response -> response.getTitle().equals("Mars Planet"))
+                .verifyComplete();
+
+        verify(apodRepository).findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(
+                eq(searchTerm), eq(searchTerm), eq(pageable));
+    }
+
+    /**
+     * Tests that {@code searchApods} with a negative offset returns paginated APODs from the beginning.
+     */
+    @Test
+    void searchApods_WithNegativeOffset_ShouldReturnPaginatedApods() {
+        String searchTerm = "nebula";
+        Integer size = 1;
+        Integer offset = -1; // Negative offset
+        Sort sort = Sort.unsorted();
+        Pageable pageable = PageRequest.of(0, size, sort); // Should default to page 0
+
+        Apod apod1 = new Apod();
+        apod1.setTitle("Orion Nebula");
+        List<Apod> paginatedApods = Arrays.asList(apod1);
+
+        when(apodRepository.findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(
+                eq(searchTerm), eq(searchTerm), eq(pageable)))
+                .thenReturn(paginatedApods);
+
+        Flux<ApodResponse> result = apodService.searchApods(searchTerm, null, null, offset, size);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Orion Nebula"))
+                .verifyComplete();
+
+        verify(apodRepository).findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(
+                eq(searchTerm), eq(searchTerm), eq(pageable));
+    }
+
+    /**
+     * Tests that {@code searchApods} with a non-positive size returns APODs with the default size.
+     */
+    @Test
+    void searchApods_WithNonPositiveSize_ShouldReturnDefaultSize() {
+        String searchTerm = "nebula";
+        Integer size = 0; // Non-positive size
+        Integer offset = 0;
+        Sort sort = Sort.unsorted();
+        Pageable pageable = PageRequest.of(offset, 20, sort); // Should use default size 20
+
+        Apod apod1 = new Apod();
+        apod1.setTitle("Orion Nebula");
+        List<Apod> paginatedApods = Arrays.asList(apod1);
+
+        when(apodRepository.findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(
+                eq(searchTerm), eq(searchTerm), eq(pageable)))
+                .thenReturn(paginatedApods);
+
+        Flux<ApodResponse> result = apodService.searchApods(searchTerm, null, null, offset, size);
+
+        StepVerifier.create(result)
+                .expectNextMatches(response -> response.getTitle().equals("Orion Nebula"))
                 .verifyComplete();
 
         verify(apodRepository).findByTitleContainingIgnoreCaseOrExplanationContainingIgnoreCase(
