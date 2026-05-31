@@ -1,6 +1,7 @@
 package com.onfilm.apodbackend;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -16,7 +17,9 @@ public class ApodBackendApplication {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        SpringApplication.run(ApodBackendApplication.class, args);
+        SpringApplication app = new SpringApplication(ApodBackendApplication.class);
+        app.setWebApplicationType(WebApplicationType.REACTIVE);
+        app.run(args);
     }
 
 }
