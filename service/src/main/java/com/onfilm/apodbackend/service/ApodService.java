@@ -19,11 +19,13 @@ public interface ApodService {
     Mono<ApodResponse> getApod(LocalDate date);
 
     /**
-     * Retrieves a list of APOD data with optional sorting.
+     * Retrieves a list of APOD data with optional sorting and pagination.
      *
      * @param sort The field to sort by (e.g., "date").
      * @param order The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
      * @return A Flux emitting a list of ApodResponse.
      */
-    Flux<ApodResponse> getApods(String sort, String order);
+    Flux<ApodResponse> getApods(String sort, String order, Integer offset, Integer size);
 }

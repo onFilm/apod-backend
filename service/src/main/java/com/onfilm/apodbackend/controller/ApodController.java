@@ -43,19 +43,23 @@ public class ApodController {
     }
 
     /**
-     * Retrieves a list of APOD data with optional sorting.
+     * Retrieves a list of APOD data with optional sorting and pagination.
      *
      * @param sort The field to sort by (e.g., "date").
      * @param order The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
      * @return A Flux emitting a list of ApodResponse.
      */
     @GetMapping("/apods")
     public Flux<ApodResponse> getApods(
             @RequestParam(value = "_sort", required = false) String sort,
-            @RequestParam(value = "_order", required = false) String order) {
-        log.info("Received request to fetch APODs with sort: {} and order: {}", sort, order);
-        return apodService.getApods(sort, order)
-                .doOnComplete(() -> log.info("Successfully fetched APODs with sort: {} and order: {}", sort, order))
-                .doOnError(error -> log.error("Failed to fetch APODs with sort: {} and order: {}", sort, order, error));
+            @RequestParam(value = "_order", required = false) String order,
+            @RequestParam(value = "_offset", required = false) Integer offset,
+            @RequestParam(value = "_size", required = false) Integer size) {
+        log.info("Received request to fetch APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size);
+        return apodService.getApods(sort, order, offset, size)
+                .doOnComplete(() -> log.info("Successfully fetched APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size))
+                .doOnError(error -> log.error("Failed to fetch APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size, error));
     }
 }
