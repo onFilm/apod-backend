@@ -56,10 +56,33 @@ public class ApodController {
             @RequestParam(value = "_sort", required = false) String sort,
             @RequestParam(value = "_order", required = false) String order,
             @RequestParam(value = "_offset", required = false) Integer offset,
-            @RequestParam(value = "_size", required = false) Integer size) {
+            @RequestParam(value = "_size", required = false, defaultValue = "20") Integer size) {
         log.info("Received request to fetch APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size);
         return apodService.getApods(sort, order, offset, size)
                 .doOnComplete(() -> log.info("Successfully fetched APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size))
                 .doOnError(error -> log.error("Failed to fetch APODs with sort: {}, order: {}, offset: {}, size: {}", sort, order, offset, size, error));
+    }
+
+    /**
+     * Searches for APODs based on a search term and returns a paginated list.
+     *
+     * @param searchTerm The term to search for in APOD titles or explanations.
+     * @param sort The field to sort by (e.g., "date").
+     * @param order The sort order (e.g., "asc", "desc").
+     * @param offset The starting index for pagination.
+     * @param size The number of results to return for pagination.
+     * @return A Flux emitting a list of ApodResponse.
+     */
+    @GetMapping(value = "/apods", params = "q")
+    public Flux<ApodResponse> searchApods(
+            @RequestParam(value = "q") String searchTerm,
+            @RequestParam(value = "_sort", required = false) String sort,
+            @RequestParam(value = "_order", required = false) String order,
+            @RequestParam(value = "_offset", required = false) Integer offset,
+            @RequestParam(value = "_size", required = false, defaultValue = "20") Integer size) {
+        log.info("Received request to search APODs with term: {}, sort: {}, order: {}, offset: {}, size: {}", searchTerm, sort, order, offset, size);
+        return apodService.searchApods(searchTerm, sort, order, offset, size)
+                .doOnComplete(() -> log.info("Successfully searched APODs with term: {}, sort: {}, order: {}, offset: {}, size: {}", searchTerm, sort, order, offset, size))
+                .doOnError(error -> log.error("Failed to search APODs with term: {}, sort: {}, order: {}, offset: {}, size: {}", searchTerm, sort, order, offset, size, error));
     }
 }
