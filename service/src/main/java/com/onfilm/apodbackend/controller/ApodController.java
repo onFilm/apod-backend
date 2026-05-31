@@ -2,10 +2,16 @@ package com.onfilm.apodbackend.controller;
 
 import com.onfilm.apodbackend.dto.ApodResponse;
 import com.onfilm.apodbackend.service.ApodService;
+import com.onfilm.apodbackend.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +30,47 @@ import java.time.LocalDate;
 public class ApodController {
 
     private final ApodService apodService;
+    private final SessionService sessionService;
+
+    /**
+     * Authenticates the user, creates a session, and returns a session cookie.
+     *
+     * @return A Mono emitting a success message.
+     */
+    @GetMapping("/authenticate")
+    public Mono<ResponseEntity<String>> authenticate() {
+        String sessionId = sessionService.createSession();
+        ResponseCookie cookie = ResponseCookie.from("session-id", sessionId)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(3600)
+                .build();
+        return Mono.just(ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("Authenticated"));
+    }
+
+    /**
+     * Invalidates the session and clearing the session cookie.
+     *
+     * @param sessionId The session ID from the cookie.
+     * @return A Mono emitting a success message.
+     */
+    @PostMapping("/invalidate")
+    public Mono<ResponseEntity<String>> invalidate(@CookieValue(name = "session-id", required = false) String sessionId) {
+        if (sessionId != null) {
+            sessionService.invalidateSession(sessionId);
+        }
+
+        // Create a cookie that expires immediately to clear it from the browser.
+        ResponseCookie deleteCookie = ResponseCookie.from("session-id", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return Mono.just(ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).body("Logged out"));
+    }
 
     /**
      * Retrieves the APOD data for a specific date.

@@ -1,12 +1,16 @@
 package com.onfilm.apodbackend.controller;
 
+import com.onfilm.apodbackend.config.JacksonConfig;
 import com.onfilm.apodbackend.dto.ApodResponse;
+import com.onfilm.apodbackend.filter.CookieAuthFilter;
 import com.onfilm.apodbackend.service.ApodService;
+import com.onfilm.apodbackend.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,15 +19,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for the {@link ApodController} class.
  */
 @WebFluxTest(ApodController.class)
+@Import({CookieAuthFilter.class, JacksonConfig.class})
 class ApodControllerTest {
 
     @Autowired
@@ -32,12 +35,53 @@ class ApodControllerTest {
     @MockBean
     private ApodService apodService;
 
+    @MockBean
+    private SessionService sessionService;
+
     @BeforeEach
     void setUp() {
-        // Set default mock behaviors to prevent NullPointerExceptions if a method is called without a specific stub
+        // Mock the session service to always return a valid session
+        when(sessionService.isValidSession(anyString())).thenReturn(true);
+
+        // Set default mock behaviors for the APOD service
         when(apodService.getApod(any(LocalDate.class))).thenReturn(Mono.empty());
         when(apodService.getApods(any(String.class), any(String.class), any(Integer.class), any(Integer.class))).thenReturn(Flux.empty());
         when(apodService.searchApods(any(String.class), any(String.class), any(String.class), any(Integer.class), any(Integer.class))).thenReturn(Flux.empty());
+    }
+
+    /**
+     * Tests that the authenticate endpoint returns a session cookie.
+     */
+    @Test
+    void authenticate_shouldReturnSessionCookie() {
+        when(sessionService.createSession()).thenReturn("test-session-id");
+
+        webTestClient.get()
+                .uri("/api/v1/authenticate")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueMatches("Set-Cookie", ".*session-id=test-session-id.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Path=/.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Max-Age=3600.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*HttpOnly.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Secure.*");
+    }
+
+    /**
+     * Tests that the invalidate endpoint clears the session cookie.
+     */
+    @Test
+    void invalidate_shouldClearSessionCookie() {
+        webTestClient.post()
+                .uri("/api/v1/invalidate")
+                .cookie("session-id", "test-session-id")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueMatches("Set-Cookie", ".*session-id=.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Path=/.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Max-Age=0.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*HttpOnly.*")
+                .expectHeader().valueMatches("Set-Cookie", ".*Secure.*");
     }
 
     /**
@@ -54,6 +98,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apod?date=2023-10-01")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -75,6 +120,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apod")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -92,6 +138,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apod?date=2023-10-01")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
@@ -113,6 +160,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -137,6 +185,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?_sort=date&_order=asc")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -161,6 +210,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?_offset=1")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -185,6 +235,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?_size=1")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -209,6 +260,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?_offset=1&_size=1")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -233,6 +285,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?_sort=date&_order=desc&_offset=1&_size=1")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -249,6 +302,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
@@ -270,6 +324,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?q=Mars&_size=20")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -294,6 +349,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?q=Mars&_sort=date&_order=asc&_offset=0&_size=2")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(ApodResponse.class)
@@ -310,6 +366,7 @@ class ApodControllerTest {
 
         webTestClient.get()
                 .uri("/api/v1/apods?q=Mars&_size=20")
+                .cookie("session-id", "valid-session")
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
